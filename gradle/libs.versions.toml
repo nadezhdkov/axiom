@@ -1,0 +1,17 @@
+[versions]
+junit = "5.10.0"
+jqwik = "1.9.1"
+gson = "2.13.2"
+snakeyaml = "2.5"
+
+[libraries]
+# used by: every module's testImplementation (axiom-core/src/test/java/**)
+junitBom     = { module = "org.junit:junit-bom", version.ref = "junit" }
+junitJupiter = { module = "org.junit.jupiter:junit-jupiter" }
+# used by: axiom-collections testImplementation, property-based tests of HAMT invariants
+# (path copying, structural equality, hash collision behavior) — axiom.md §11 hard requirement
+jqwik        = { module = "net.jqwik:jqwik", version.ref = "jqwik" }
+# used by: io.axiom.json.internal.gson.* — engine hidden behind internal.* per axiom.md §3/§5
+gson         = { module = "com.google.code.gson:gson", version.ref = "gson" }
+# used by: io.axiom.yaml.internal.snakeyaml.* — engine hidden behind internal.* per axiom.md §3/§5
+snakeyaml    = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
