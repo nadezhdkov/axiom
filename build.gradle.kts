@@ -36,6 +36,29 @@ subprojects {
         dependsOn(tasks.matching { it.name == "plainSourcesJar" })
     }
 
+    // ─────────────────────────────────────────────────────
+    // GitHub Packages — Subprojects
+    // ─────────────────────────────────────────────────────
+    // Consumed by `./gradlew publish` (all repositories) or
+    // `./gradlew publishAllPublicationsToGitHubPackagesRepository` (this one only).
+    // Credentials: GITHUB_ACTOR/GITHUB_TOKEN are set automatically in GitHub Actions;
+    // locally, set them as env vars or pass -Pgpr.user=... -Pgpr.token=... (a PAT with
+    // read:packages/write:packages scope).
+    publishing {
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/nadezhdkov/axiom")
+                credentials {
+                    username = System.getenv("GITHUB_ACTOR")
+                        ?: findProperty("gpr.user") as String?
+                    password = System.getenv("GITHUB_TOKEN")
+                        ?: findProperty("gpr.token") as String?
+                }
+            }
+        }
+    }
+
     dependencies {
         testImplementation(platform(rootProject.libs.junitBom))
         testImplementation(rootProject.libs.junitJupiter)
@@ -63,7 +86,7 @@ subprojects {
             name.set("Axiom - ${project.name}")
             description.set("Axiom module: ${project.name}.")
             inceptionYear.set("2026")
-            url.set("https://github.com/rickmvi/axiom")
+            url.set("https://github.com/nadezhdkov/axiom")
 
             licenses {
                 license {
@@ -74,9 +97,9 @@ subprojects {
             }
 
             scm {
-                url.set("https://github.com/rickmvi/axiom")
-                connection.set("scm:git:https://github.com/rickmvi/axiom.git")
-                developerConnection.set("scm:git:ssh://git@github.com/rickmvi/axiom.git")
+                url.set("https://github.com/nadezhdkov/axiom")
+                connection.set("scm:git:https://github.com/nadezhdkov/axiom.git")
+                developerConnection.set("scm:git:ssh://git@github.com/nadezhdkov/axiom.git")
             }
         }
     }

@@ -5,6 +5,18 @@ organizado por módulo. Versionamento semântico estrito desde `0.x`.
 
 ## [Unreleased]
 
+### Tooling / CI
+- Added: GitHub Packages as a publish target for every module (`build.gradle.kts`, subprojects'
+  `publishing.repositories`), alongside the existing Maven Central target — lets other projects
+  consume `io.axiom:*` modules straight from this repository's package registry.
+- Added: `.github/workflows/publish.yml`, triggered on GitHub Release or manual dispatch, runs
+  `./gradlew build` then `publishAllPublicationsToGitHubPackagesRepository` using the
+  automatically-provided `GITHUB_TOKEN` — no manual PAT needed for CI itself (only consumers
+  need one, to read).
+- Fixed: POM/SCM URLs in `build.gradle.kts` pointed to `rickmvi/axiom`, which doesn't match the
+  actual GitHub remote (`nadezhdkov/axiom`) — corrected to avoid publishing packages with
+  incorrect source-repository metadata.
+
 ### axiom-dotenv
 - Fixed: `DotenvException` for a malformed `.env` line now includes the source file name and
   line number (`Malformed line in 'config/app.env' (line 4): "..."`), plus a hint when the line
