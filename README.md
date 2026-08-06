@@ -130,6 +130,26 @@ Ver [`docs/architecture.md#3`](docs/architecture.md) para o racional completo.
 
 **Requisitos**: JDK 21+, Gradle 9.x
 
+Os módulos são publicados no [GitHub Packages](https://github.com/nadezhdkov/axiom/packages) deste
+repositório. O registro Maven do GitHub Packages exige autenticação mesmo para pacotes públicos
+(limitação do próprio GitHub Packages, não da Axiom) — gere um
+[PAT (classic)](https://github.com/settings/tokens) com escopo `read:packages` e declare o
+repositório no seu projeto:
+
+```kotlin
+// settings.gradle.kts ou build.gradle.kts do seu projeto
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://maven.pkg.github.com/nadezhdkov/axiom")
+        credentials {
+            username = "<seu usuário do GitHub>"
+            password = "<PAT com escopo read:packages>" // nunca commitar em texto puro
+        }
+    }
+}
+```
+
 ```kotlin
 // build.gradle.kts do seu projeto
 dependencies {
