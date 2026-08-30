@@ -4,3 +4,13 @@ build/
 .idea/
 *.iml
 out/
+
+# Eclipse/VSCode Java build output
+bin/
+
+# Never commit credentials — publishing tokens/signing keys belong in
+# ~/.gradle/gradle.properties or CI secrets, never in the repo.
+gradle.properties
+*.gpg
+*.asc
+secring.*

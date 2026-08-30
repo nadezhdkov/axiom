@@ -5,6 +5,19 @@ organizado por módulo. Versionamento semântico estrito desde `0.x`.
 
 ## [Unreleased]
 
+### axiom-console
+- Added: pacote `io.axiom.console.print` (exportado no `module-info`) — `IO` para saída de console
+  com substituição de placeholders `{}` e tags `[tag]...[/]`, com cor de fundo/frente (`Color`) e
+  estilo de texto (`TextStyle`). O `PrintStream` alvo é trocável via `IO#use(PrintStream)` sobre um
+  `AtomicReference`, mantendo o princípio de "sem estado estático mutável não sincronizado" já
+  aplicado em `Scan`, e tornando a saída testável sem tocar `System.out`.
+- Nota de tensão registrada (não resolvida): `print/internal/Placeholders.java` implementa um
+  parser de `{}` próprio em vez de consumir `axiom-placeholder`, decisão deliberada para não
+  adicionar mais uma aresta de dependência a `axiom-console` (documentada no `package-info`).
+  Isso convive em tensão com a regra de `docs/architecture.md §5` ("o parser de placeholder não
+  deve ser reimplementado; consome `axiom-placeholder`") e com "um nome, um conceito" (§4).
+  Precisa de decisão de mantenedor — ver `docs/CONVENTIONS.md`.
+
 ### Tooling / CI
 - Added: GitHub Packages as a publish target for every module (`build.gradle.kts`, subprojects'
   `publishing.repositories`), alongside the existing Maven Central target — lets other projects

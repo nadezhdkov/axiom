@@ -4,14 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-This is the **Axiom repository**: a Java 21, multi-module Gradle library (`io.axiom`), plus the planning/audit documents that drove its design. All six roadmap etapas (`docs/architecture.md §14`) are implemented — 10 modules, each with `module-info.java`, a real test suite, a compiled `examples/` sourceSet, and a `README.md`. There is no remaining "not yet built" module; `axiom-experimental`/`axiom-bench` are the only ones still unclaimed, and only because nothing has needed them yet.
+This is the **Axiom repository**: a Java 21, multi-module Gradle library (`io.axiom`), plus the planning/audit documents that drove its design. All six roadmap etapas (`docs/architecture.md §14`) are implemented, plus an Etapa 7 that added three more modules — **13 modules** today, each with `module-info.java`, a real test suite, a compiled `examples/` sourceSet, and a `README.md`. There is no remaining "not yet built" module; `axiom-experimental`/`axiom-bench` are the only ones still unclaimed, and only because nothing has needed them yet.
 
 The repository contains:
 
 1. **`auditoria.md`** — a detailed, file-and-class-cited technical audit of two prior Java libraries, JToolBox and Obsidian, that Axiom's design was derived from. Their source trees are **no longer in this repo** — porting is complete and they were removed once nothing further needed to be extracted from them (their GitHub remotes still exist if the original source is ever needed again). `auditoria.md` is now a frozen historical record: don't add new file/class citations to it (there's no source left to verify them against), only correct a factual error in what's already written.
 2. **`docs/architecture.md`** — the architecture proposal for Axiom, derived from `auditoria.md`. This is the normative source for module boundaries, the dependency DAG, and design principles. It predates implementation and is *not* a status tracker — for current implementation status, read `README.md` and `CHANGELOG.md` instead.
 3. **`docs/CONVENTIONS.md`** — the PR checklist (naming, dependencies, tests, docs) applied to every module, plus the per-module README template; includes a recorded open tension (exception hierarchy — see below).
-4. **The `axiom-*/` modules themselves** — `axiom-core`, `axiom-collections`, `axiom-concurrent`, `axiom-reflect`, `axiom-placeholder`, `axiom-dotenv`, `axiom-json`, `axiom-yaml`, `axiom-io`, `axiom-console`. Root `build.gradle.kts`/`settings.gradle.kts`/`gradle/libs.versions.toml`/`Makefile` wire them together.
+4. **The `axiom-*/` modules themselves** — `axiom-core`, `axiom-collections`, `axiom-concurrent`, `axiom-reflect`, `axiom-placeholder`, `axiom-dotenv`, `axiom-json`, `axiom-yaml`, `axiom-io`, `axiom-console`, plus the Etapa 7 additions `axiom-id`, `axiom-csv`, `axiom-numeric`. Root `build.gradle.kts`/`settings.gradle.kts`/`gradle/libs.versions.toml`/`Makefile` wire them together.
+5. **`docs/PROPOSTAS-MODULOS.md`** — evaluated-but-not-implemented candidates (the sanctioned `architecture.md §5` utilities that were never built, `axiom-bench`, and a proposed `axiom-toml`), each with a worked code example. This is a proposal log, not a commitment — nothing in it is normative until implemented and recorded in `CHANGELOG.md`.
 
 (`axiom.md` and `docs/AXIOM-PROPOSTAS-E-PADRAO-DOCS.md` existed earlier in the project's history — a root-level copy of the architecture doc, and a module-proposal log — and were removed once `docs/architecture.md`/`docs/CONVENTIONS.md`/`README.md`/`CHANGELOG.md` made them fully redundant. If you see either name mentioned in old commit messages or module READMEs, they mean `docs/architecture.md`.)
 
@@ -24,6 +25,7 @@ Any question about "does X exist in JToolBox/Obsidian" or "why does Axiom do Y i
 - If updating `auditoria.md` or `docs/architecture.md`, preserve the existing convention: technical claims about JToolBox/Obsidian cite a concrete file path and class/interface name rather than a general impression — even though that source is no longer in this repo to check against, the citation format is what makes the claim verifiable in principle (via the projects' GitHub remotes) rather than folklore.
 - Distinguish, in both documents, between what was **observed** in the audited libraries (fact) and what is **recommended** for Axiom (decision) — this distinction is already threaded through both files and must be preserved in edits.
 - **Known open tension, not yet resolved**: most module root exceptions (`JsonException`, `YamlException`, `FileOperationException`, `ReflectException`, `PromiseException`, `ParseFailureException`/`ValidationException`) extend `RuntimeException` directly instead of `axiom-core`'s `AxiomException`, because those modules deliberately don't depend on `axiom-core`. See `docs/CONVENTIONS.md` ("Hierarquia de exceções") before "fixing" this unilaterally — it needs a maintainer decision, not a mechanical patch.
+- **There is a sanctioned-but-unbuilt backlog.** `docs/architecture.md §5` ("Utilitários pontuais sem módulo dedicado") approves three utilities that do **not** exist in the source tree yet: `Validator<T>` (in `axiom-core`), `Memoized<T>` (in `axiom-concurrent`), and `@Buildable` record-copy codegen (packaging deliberately undecided). Don't treat their absence as an oversight to silently fix, nor their presence in `architecture.md` as evidence they exist — see `docs/PROPOSTAS-MODULOS.md` for the current state of each.
 - **Etapa 1's `axiom-collections` and Etapa 3's `axiom-dotenv` were originally shipped with deferred pieces** (`PVector`/`PQueue`/`PStack`/`PSortedMap`/`PSortedSet`; `@Profile`/`@Reloadable`) that have since been completed — `CHANGELOG.md` has the full history if you need to understand why a design decision was made in two steps.
 
 ## Commands
@@ -49,8 +51,13 @@ axiom-core            (Try, Result, Maybe, Failable*, base exceptions, HumanDura
    ├── axiom-placeholder      (→ axiom-core)
    ├── axiom-dotenv           (→ axiom-core, axiom-reflect, axiom-placeholder)
    ├── axiom-json             (→ axiom-core, axiom-reflect; Gson hidden behind internal.gson.*)
-   └── axiom-yaml             (→ axiom-core, axiom-reflect; SnakeYAML hidden behind internal.snakeyaml.*)
+   ├── axiom-yaml             (→ axiom-core, axiom-reflect; SnakeYAML hidden behind internal.snakeyaml.*)
+   ├── axiom-id               (no dependency — UUIDv7/ULID, time-ordered identifiers)
+   ├── axiom-csv              (no dependency — CSV parse/write, pure implementation, no third-party engine)
+   └── axiom-numeric          (no dependency — fixed-width I8..I64/U8..U64, explicit overflow, Bytes/Endian)
 ```
+
+The three Etapa 7 modules (`axiom-id`, `axiom-csv`, `axiom-numeric`) each declare **zero** dependencies — not even `axiom-core`. `docs/architecture.md §5` explicitly left that choice to implementation time under the "no dependency without confirmed use" rule, and none of them ended up needing it.
 
 `axiom-text`/`axiom-datetime` were evaluated per `docs/architecture.md`'s own "does the JDK already solve this?" filter and **not created** — the one real gap found (human-readable `Duration` formatting) became `io.axiom.core.time.HumanDuration` inside `axiom-core` instead. `axiom-experimental`/`axiom-bench` remain unclaimed — nothing has needed them yet.
 

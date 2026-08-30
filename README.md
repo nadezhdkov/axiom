@@ -33,7 +33,6 @@ de acoplamento estrutural entre `axiom-collections` e `axiom-json`.
 - [Comandos Gradle](#comandos-gradle)
 - [Exemplos](#exemplos)
 - [Testes](#testes)
-- [Status do Projeto](#status-do-projeto)
 - [Versionamento e Changelog](#versionamento-e-changelog)
 - [Documentação](#documentação)
 - [Contribuindo](#contribuindo)
@@ -49,7 +48,8 @@ de acoplamento estrutural entre `axiom-collections` e `axiom-json`.
 - Reflection fluente com cache de lookup
 - Configuração declarativa (`.env` + injeção por anotação, profiles, reload)
 - Modelo de dados JSON e YAML próprios, cada um com motor plugável (Gson/SnakeYAML escondidos)
-- I/O de arquivos e scanner de console testável
+- Inteiros de largura fixa/unsigned, identificadores ordenáveis por tempo (UUIDv7, ULID), CSV
+- I/O de arquivos, scanner de console testável e saída de console com placeholders/cor
 - **Zero framework**: sem DI container, sem servidor HTTP, sem ORM, sem test
   runner — ver [`docs/architecture.md#2`](docs/architecture.md) para a lista
   explícita do que **não** pertence à Axiom.
@@ -74,25 +74,29 @@ Detalhamento completo em [`docs/architecture.md`](docs/architecture.md).
 
 ## Módulos
 
-| Módulo | Responsabilidade | Depende de | Status |
-|---|---|---|---|
-| `axiom-core` | `Try`, `Result`, `Maybe`, `Failable*`, exceções base | — | Em desenvolvimento |
-| `axiom-collections` | Coleções persistentes: HAMT, vetor, pilha, fila, mapa/set ordenados | — | Em desenvolvimento |
-| `axiom-concurrent` | `Promise`, `Box`/`AtomicBox`, execução com virtual threads | `axiom-core` | Em desenvolvimento |
-| `axiom-reflect` | Reflection fluente com cache de lookup | `axiom-core` | Em desenvolvimento |
-| `axiom-dotenv` | Parsing + injeção declarativa de `.env`, com `@Profile`/`@Reloadable` | `axiom-core`, `axiom-reflect`, `axiom-placeholder` | Em desenvolvimento |
-| `axiom-json` | Modelo JSON próprio + motor plugável (Gson escondido) | `axiom-core`, `axiom-reflect` | Em desenvolvimento |
-| `axiom-yaml` | Modelo YAML próprio + motor plugável (SnakeYAML escondido) | `axiom-core`, `axiom-reflect` | Em desenvolvimento |
-| `axiom-placeholder` | Resolução de placeholders/templates de string | `axiom-core` | Em desenvolvimento |
-| `axiom-io` | Arquivos, hashing, compressão, busca em texto (`FileWatcher` pendente) | — | Em desenvolvimento |
-| `axiom-console` | Scanner de console testável (`InputSource` plugável, `tryRead` não-lançador) | `axiom-core` | Em desenvolvimento |
-| `axiom-text` / `axiom-datetime` | Utilitários que a JDK não resolve bem | — | **Avaliado, não criado** — ver `axiom-core` (`HumanDuration`) e `CHANGELOG.md` |
-| `axiom-numeric` | Inteiros de largura fixa, unsigned, overflow explícito, bytes/endianness | — | Em desenvolvimento |
-| `axiom-id` | Identificadores ordenáveis por tempo (UUIDv7, ULID) | — | Em desenvolvimento |
-| `axiom-csv` | Parsing/escrita de CSV com modelo próprio | — | Em desenvolvimento |
-| `axiom-experimental` | APIs em incubação | — | Planejado |
+Todos implementados, com suíte de testes, `examples/` compilado por CI e README próprio — ver
+[`CHANGELOG.md`](CHANGELOG.md) para o histórico de cada um. `axiom-experimental`/`axiom-bench`
+seguem sem diretório: nada até agora precisou deles.
 
-Status possíveis: Estável · Em desenvolvimento · Planejado · Proposto · Avaliar necessidade
+| Módulo | Responsabilidade | Depende de |
+|---|---|---|
+| `axiom-core` | `Try`, `Result`, `Maybe`, `Failable*`, exceções base, `HumanDuration`, `TypeReference` | — |
+| `axiom-collections` | Coleções persistentes: HAMT, vetor, pilha, fila, mapa/set ordenados | — |
+| `axiom-concurrent` | `Promise`, `Box`/`AtomicBox`, execução com virtual threads | — |
+| `axiom-reflect` | Reflection fluente com cache de lookup | — |
+| `axiom-io` | Arquivos, hashing, compressão, busca em texto | — |
+| `axiom-numeric` | Inteiros de largura fixa, unsigned, overflow explícito (`*Wrapping`/`*Saturating`), bytes/endianness | — |
+| `axiom-id` | Identificadores ordenáveis por tempo (UUIDv7, ULID) | — |
+| `axiom-csv` | Parsing/escrita de CSV (RFC 4180) com modelo próprio | — |
+| `axiom-placeholder` | Resolução de placeholders/templates de string | `axiom-core` |
+| `axiom-console` | Scanner de console testável (`InputSource` plugável, `tryRead` não-lançador) + `IO.print/println` com placeholders e tags de cor/estilo | `axiom-core` |
+| `axiom-dotenv` | Parsing + injeção declarativa de `.env`, com `@Profile`/`@Reloadable` | `axiom-core`, `axiom-reflect`, `axiom-placeholder` |
+| `axiom-json` | Modelo JSON próprio + motor plugável (Gson escondido) | `axiom-core`, `axiom-reflect` |
+| `axiom-yaml` | Modelo YAML próprio + motor plugável (SnakeYAML escondido) | `axiom-core`, `axiom-reflect` |
+
+`axiom-text`/`axiom-datetime` foram avaliados e **não criados** — o único gap real encontrado
+(formatação humana de `Duration`) virou `HumanDuration` dentro de `axiom-core` em vez de um
+módulo à parte.
 
 ---
 
@@ -101,21 +105,18 @@ Status possíveis: Estável · Em desenvolvimento · Planejado · Proposto · Av
 ```
 axiom-core
    ↑
-   ├── axiom-collections
-   ├── axiom-reflect
-   ├── axiom-concurrent
-   ├── axiom-text
-   ├── axiom-datetime
-   ├── axiom-io
-   ├── axiom-id
-   ├── axiom-csv
-   ├── axiom-numeric
-   ├── axiom-console
-   ├── axiom-placeholder
-   ├── axiom-dotenv    ──┐
-   ├── axiom-json         ├─ podem depender de axiom-reflect
-   └── axiom-yaml         │  (e, no caso de dotenv/yaml, de axiom-placeholder)
-                        ──┘
+   ├── axiom-collections   (sem dependência)
+   ├── axiom-reflect       (sem dependência)
+   ├── axiom-concurrent    (sem dependência)
+   ├── axiom-io            (sem dependência)
+   ├── axiom-numeric       (sem dependência)
+   ├── axiom-id            (sem dependência)
+   ├── axiom-csv           (sem dependência)
+   ├── axiom-console       (→ axiom-core)
+   ├── axiom-placeholder   (→ axiom-core)
+   ├── axiom-dotenv        (→ axiom-core, axiom-reflect, axiom-placeholder)
+   ├── axiom-json          (→ axiom-core, axiom-reflect)
+   └── axiom-yaml          (→ axiom-core, axiom-reflect)
 ```
 
 DAG estrito, sem ciclos. Nenhum módulo de capacidade depende de outro módulo
@@ -130,35 +131,60 @@ Ver [`docs/architecture.md#3`](docs/architecture.md) para o racional completo.
 
 **Requisitos**: JDK 21+, Gradle 9.x
 
-Os módulos são publicados no [GitHub Packages](https://github.com/nadezhdkov/axiom/packages) deste
-repositório. O registro Maven do GitHub Packages exige autenticação mesmo para pacotes públicos
-(limitação do próprio GitHub Packages, não da Axiom) — gere um
-[PAT (classic)](https://github.com/settings/tokens) com escopo `read:packages` e declare o
-repositório no seu projeto:
+```kotlin
+// build.gradle.kts do seu projeto
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("io.github.nadezhdkov:axiom-core:<versão>")
+    implementation("io.github.nadezhdkov:axiom-collections:<versão>") // opcional, por módulo
+}
+```
+
+Cada módulo é independente — adote só o que precisar.
+
+> **Sobre o `groupId`**: as coordenadas Maven usam `io.github.nadezhdkov` (namespace verificado no
+> Maven Central), enquanto os pacotes Java e os módulos JPMS continuam `io.axiom.*`. Os dois são
+> independentes — o Central valida apenas o `groupId`.
+
+### Testando contra mudanças locais
+
+Para verificar um projeto consumidor contra o código local, sem publicar em lugar nenhum:
+
+```bash
+make local   # ./gradlew publishToMavenLocal
+```
+
+E no projeto consumidor, adicione `mavenLocal()` antes de `mavenCentral()`. Sem token, sem
+configuração de credencial.
+
+### GitHub Packages (alvo secundário)
+
+Os módulos também são publicados no [GitHub Packages](https://github.com/nadezhdkov/axiom/packages).
+Esse registro exige autenticação **mesmo para pacotes públicos** (limitação do GitHub Packages, não
+da Axiom), então o Maven Central acima é o caminho recomendado para consumo. Se ainda assim precisar
+usá-lo, gere um [PAT clássico](https://github.com/settings/tokens) com escopo `read:packages`,
+coloque as credenciais em `~/.gradle/gradle.properties` (nunca no repositório):
+
+```properties
+gpr.user=<seu usuário do GitHub>
+gpr.key=<PAT com escopo read:packages>
+```
 
 ```kotlin
-// settings.gradle.kts ou build.gradle.kts do seu projeto
 repositories {
     mavenCentral()
     maven {
         url = uri("https://maven.pkg.github.com/nadezhdkov/axiom")
         credentials {
-            username = "<seu usuário do GitHub>"
-            password = "<PAT com escopo read:packages>" // nunca commitar em texto puro
+            username = providers.gradleProperty("gpr.user").getOrNull()
+            password = providers.gradleProperty("gpr.key").getOrNull()
         }
     }
 }
 ```
-
-```kotlin
-// build.gradle.kts do seu projeto
-dependencies {
-    implementation("io.axiom:axiom-core:<versão>")
-    implementation("io.axiom:axiom-collections:<versão>") // opcional, por módulo
-}
-```
-
-Cada módulo é independente — adote só o que precisar.
 
 ---
 
@@ -194,22 +220,6 @@ diretório `examples/` correspondente.
 ```bash
 ./gradlew test
 ```
-
----
-
-## Status do Projeto
-
-Roadmap por etapas (ver [`docs/architecture.md#14`](docs/architecture.md)
-para detalhes):
-
-- [x] Etapa 0 — Fundação (`axiom-core`, convenções, CI)
-- [x] Etapa 1 — Coleções persistentes (HAMT map/set, `PVector`, `PStack`, `PQueue`, `PSortedMap`/`PSortedSet` completos)
-- [x] Etapa 2 — Concorrência (`Promise`, `Box`/`AtomicBox`, `Tasks`)
-- [x] Etapa 3 — Reflection e configuração (`axiom-reflect`, `axiom-placeholder`, `axiom-dotenv`, incluindo `@Profile`/`@Reloadable`)
-- [x] Etapa 4 — Dados e I/O (`axiom-json`, `axiom-yaml`, `axiom-io`)
-- [x] Etapa 5 — Console e extras (`axiom-console`; `axiom-text`/`axiom-datetime` avaliados e não criados — `HumanDuration` foi para `axiom-core`)
-- [x] Etapa 6 — Estabilização (auditoria de dependências, revisão de nomenclatura cruzada,
-      documentação completa; nenhum bloqueador conhecido restante para a tag `1.0`)
 
 ---
 
