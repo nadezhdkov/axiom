@@ -5,8 +5,11 @@ plugins {
     id("signing")
 }
 
-group = "io.axiom"
-version = "0.1.0-SNAPSHOT"
+// Maven groupId — must be a namespace verified on Maven Central (io.github.<user> is granted by
+// owning the GitHub account). Deliberately different from the Java package names, which stay
+// io.axiom.*: Central only validates the groupId, and the two are independent.
+group = "io.github.nadezhdkov"
+version = "0.2.0"
 
 subprojects {
     apply(plugin = "java-library")
@@ -14,8 +17,8 @@ subprojects {
     apply(plugin = "com.vanniktech.maven.publish")
     apply(plugin = "signing")
 
-    group = "io.axiom"
-    version = "0.1.0-SNAPSHOT"
+    group = "io.github.nadezhdkov"
+    version = "0.2.0"
 
     repositories {
         mavenCentral()
@@ -68,9 +71,21 @@ subprojects {
     // ─────────────────────────────────────────────────────
     // Maven Central (via Vanniktech) — Subprojects
     // ─────────────────────────────────────────────────────
+    // Credentials are never stored in this repo: the plugin reads the properties
+    // `mavenCentralUsername`/`mavenCentralPassword` (put them in ~/.gradle/gradle.properties)
+    // or the env vars ORG_GRADLE_PROJECT_mavenCentralUsername/...Password (used in CI).
+    //
+    // Signing is conditional so local builds work without a GPG key, but Maven Central REJECTS
+    // unsigned artifacts — an actual release requires the key to be present.
     val hasSigningKey = project.hasProperty("signing.gnupg.keyName") ||
         project.hasProperty("signing.keyId") ||
         System.getenv("ORG_GRADLE_PROJECT_signingKey") != null
+
+    if (project.hasProperty("signing.gnupg.keyName")) {
+        signing {
+            useGpgCmd()
+        }
+    }
 
     mavenPublishing {
         publishToMavenCentral()
@@ -93,6 +108,15 @@ subprojects {
                     name.set("Apache License 2.0")
                     url.set("https://www.apache.org/licenses/LICENSE-2.0")
                     distribution.set("repo")
+                }
+            }
+
+            // Required by Maven Central validation — a release without it is rejected.
+            developers {
+                developer {
+                    id.set("nadezhdkov")
+                    name.set("nadezhdkov")
+                    url.set("https://github.com/nadezhdkov")
                 }
             }
 

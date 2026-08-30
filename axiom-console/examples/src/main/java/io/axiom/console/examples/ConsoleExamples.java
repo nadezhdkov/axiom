@@ -4,6 +4,7 @@ import io.axiom.console.InputHandler;
 import io.axiom.console.InputScanner;
 import io.axiom.console.error.ScanError;
 import io.axiom.console.parse.Parsers;
+import io.axiom.console.print.IO;
 import io.axiom.console.validate.Validators;
 import io.axiom.core.result.Result;
 
@@ -36,5 +37,7 @@ public final class ConsoleExamples {
         );
 
         handler.close();
+
+        IO.println("Hello {}, you have [bold][green]{}[/][/] new messages", name, age);
     }
 }

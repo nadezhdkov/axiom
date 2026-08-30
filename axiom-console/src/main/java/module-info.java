@@ -7,4 +7,5 @@ module io.axiom.console {
     exports io.axiom.console.validate;
     exports io.axiom.console.prompt;
     exports io.axiom.console.error;
+    exports io.axiom.console.print;
 }
